@@ -203,11 +203,15 @@ def move_stage(session: Session, identity: Identity, oid: str, stage_id: str,
 
 def reopen(session: Session, identity: Identity, oid: str, stage_id: str) -> Opportunity:
     opp = get_tenant(session, Opportunity, identity, oid)
-    if opp.status == "open":
-        return opp
+    # Validate the requested transition BEFORE any early-return, so a bad
+    # request is rejected consistently whether the deal is open or closed.
     stage = get_tenant(session, Stage, identity, stage_id)
+    if stage.pipeline_id != opp.pipeline_id:
+        raise unprocessable("Stage belongs to a different pipeline")
     if stage.is_won or stage.is_lost:
         raise unprocessable("Reopen target must be an open stage")
+    if opp.status == "open":
+        return opp
     opp.status = "open"
     opp.closed_at = None
     opp.lost_reason = None

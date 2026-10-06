@@ -7,9 +7,17 @@ actor, before/after snapshots and timestamp.
 from __future__ import annotations
 
 import json
+from datetime import date, datetime
 from typing import Any
 
 from sqlalchemy.orm import Session
+
+
+def _json_default(obj):
+    """Snapshots may contain datetimes (due_at, expected_close_date, ...)."""
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
 
 
 def audit(
@@ -32,6 +40,8 @@ def audit(
         action=action,
         entity=entity,
         entity_id=str(entity_id),
-        before_json=json.dumps(before, ensure_ascii=False) if before else None,
-        after_json=json.dumps(after, ensure_ascii=False) if after else None,
+        before_json=json.dumps(before, ensure_ascii=False, default=_json_default)
+        if before else None,
+        after_json=json.dumps(after, ensure_ascii=False, default=_json_default)
+        if after else None,
     ))

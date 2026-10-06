@@ -23,17 +23,21 @@ def global_search(session: Session, identity: Identity, q: str,
     like = _like(q)
     out: dict[str, list] = {}
 
+    org_name_hits = or_(func.lower(Organization.name).like(like),
+                        func.lower(func.coalesce(Organization.legal_name, "")).like(like),
+                        func.lower(func.coalesce(Organization.city, "")).like(like))
     orgs = session.execute(
         select(Organization).where(
-            Organization.tenant_id == t,
-            or_(func.lower(Organization.name).like(like),
-                func.lower(func.coalesce(Organization.legal_name, "")).like(like),
-                func.lower(func.coalesce(Organization.city, "")).like(like)))
+            Organization.tenant_id == t, org_name_hits)
         .order_by(func.lower(Organization.name)).limit(limit_per_type)
     ).scalars().all()
     out["organizations"] = [{"id": o.id, "name": o.name, "type": o.type,
                              "status": o.status, "city": o.city} for o in orgs]
 
+    # a contact belongs to its organization: searching the company name must
+    # surface its people too (e.g. "تاکتاز" -> علی رضایی)
+    matched_org_ids = select(Organization.id).where(Organization.tenant_id == t,
+                                                    org_name_hits)
     contacts = session.execute(
         select(Contact).where(
             Contact.tenant_id == t,
@@ -41,7 +45,8 @@ def global_search(session: Session, identity: Identity, q: str,
                 func.lower(Contact.last_name).like(like),
                 func.lower((Contact.first_name + " " + Contact.last_name)).like(like),
                 func.lower(func.coalesce(Contact.email, "")).like(like),
-                func.lower(func.coalesce(Contact.job_title, "")).like(like)))
+                func.lower(func.coalesce(Contact.job_title, "")).like(like),
+                Contact.organization_id.in_(matched_org_ids)))
         .order_by(Contact.first_name).limit(limit_per_type)
     ).scalars().all()
     out["contacts"] = [{"id": c.id, "full_name": c.full_name, "email": c.email,

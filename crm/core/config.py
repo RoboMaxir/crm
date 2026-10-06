@@ -18,3 +18,9 @@ RISK_RULES = {
     "aging_stage_days": 21,        # days in current stage beyond which aging_score maxes
     "hot_lead_score": 80,          # score threshold for "hot leads" widget
 }
+
+# Comma-separated allowed origins for the SPA dev server. Empty disables CORS.
+CORS_ORIGINS: list[str] = [o.strip() for o in
+                           os.environ.get("CRM_CORS_ORIGINS",
+                                          "http://localhost:5173,http://127.0.0.1:5173").split(",")
+                           if o.strip()]

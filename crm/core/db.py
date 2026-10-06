@@ -38,6 +38,19 @@ if DATABASE_URL.startswith("sqlite") and ":memory:" not in DATABASE_URL:
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 
+def configure_engine(url: str) -> None:
+    """Rebind the module-level engine/session factory at runtime.
+
+    Seam used by the test harness to point the whole application (including
+    the ASGI middleware that opens its own sessions) at a test database with
+    identical transaction/session semantics. Production startup never calls
+    this — default behavior is unchanged.
+    """
+    global engine, SessionLocal
+    engine = _make_engine(url)
+    SessionLocal.configure(bind=engine)
+
+
 def init_db() -> None:
     """Create all tables (idempotent). Alembic can replace this in prod."""
     from crm.domain import models  # noqa: F401 – register mappers

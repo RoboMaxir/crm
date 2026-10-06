@@ -50,8 +50,8 @@ def create_organization(session: Session, identity: Identity, data: dict) -> Org
     name = (data.get("name") or "").strip()
     if not name:
         raise conflict("Organization name is required")
-    org = Organization(tenant_id=identity.tenant_id, **{k: v for k, v in data.items()
-                                                        if k != "tags"}, name=name)
+    payload = {k: v for k, v in data.items() if k not in ("tags", "name")}
+    org = Organization(tenant_id=identity.tenant_id, name=name, **payload)
     session.add(org)
     try:
         session.flush()

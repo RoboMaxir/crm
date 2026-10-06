@@ -326,7 +326,7 @@ class WebhookDelivery(Base):
     delivered_at: Mapped[datetime | None] = mapped_column(DateTime)
 
 
-# -------------------------------------------------------- intelligence
+# ------------------------------------------------------------- intelligence
 class IntelligenceItem(Base, TimestampMixin):
     """Consumer-side store for AI/OrgOS insights.
 
@@ -344,3 +344,12 @@ class IntelligenceItem(Base, TimestampMixin):
     text: Mapped[str] = mapped_column(Text)
     source_system: Mapped[str] = mapped_column(String(40), default="shora")
     confidence: Mapped[float] = mapped_column(Float, default=0.0)
+
+
+# --------------------------------------------------------------- settings
+class TenantSetting(Base, TimestampMixin):
+    """Per-tenant key/value preferences (JSON blob). Read by any member,
+    written only with 'manage' permission."""
+    __tablename__ = "tenant_settings"
+    tenant_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    data_json: Mapped[str] = mapped_column(Text, default="{}")

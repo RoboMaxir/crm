@@ -23,6 +23,15 @@ DB = Depends(db_dep)
 IDP = Depends(identity_dep)
 
 
+def auth(permission: str):
+    """Dependency for handlers that require a specific RBAC permission.
+
+    Usage (thin routers only – enforcement is backend-side):
+        def create_org(data=Body(...), db=DB, me=auth(PERM_CREATE)): ...
+    """
+    return require(permission)
+
+
 def parse_dt(value: str | None) -> datetime | None:
     if not value:
         return None

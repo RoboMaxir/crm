@@ -27,7 +27,7 @@ def list_orgs(db=DB, me=IDP, q: str | None = None, status: str | None = None,
 
 
 @router.post("", status_code=201)
-def create_org(data: dict = Body(...), db=DB, me=IDP(require(PERM_CREATE))):
+def create_org(data: dict = Body(...), db=DB, me=Depends(require(PERM_CREATE))):
     return dump(orgs.create_organization(db, me, coerce_dates(dict(data))))
 
 
@@ -38,12 +38,12 @@ def get_org(oid: str, db=DB, me=IDP):
 
 
 @router.patch("/{oid}")
-def update_org(oid: str, data: dict = Body(...), db=DB, me=IDP(require(PERM_UPDATE))):
+def update_org(oid: str, data: dict = Body(...), db=DB, me=Depends(require(PERM_UPDATE))):
     return dump(orgs.update_organization(db, me, oid, coerce_dates(dict(data))))
 
 
 @router.delete("/{oid}", status_code=204)
-def delete_org(oid: str, db=DB, me=IDP(require(PERM_DELETE))):
+def delete_org(oid: str, db=DB, me=Depends(require(PERM_DELETE))):
     orgs.delete_organization(db, me, oid)
 
 
@@ -54,5 +54,5 @@ def customer_360_view(oid: str, db=DB, me=IDP):
 
 @router.put("/{oid}/tags")
 def replace_tags(oid: str, tags: list[str] = Body(...), db=DB,
-                 me=IDP(require(PERM_UPDATE))):
+                 me=Depends(require(PERM_UPDATE))):
     return {"tags": set_entity_tags(db, me, "organization", oid, tags)}

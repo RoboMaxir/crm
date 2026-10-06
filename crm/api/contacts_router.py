@@ -32,7 +32,7 @@ def list_contacts(db=DB, me=IDP, q: str | None = None, status: str | None = None
 
 
 @router.post("", status_code=201)
-def create_contact(data: dict = Body(...), db=DB, me=IDP(require(PERM_CREATE))):
+def create_contact(data: dict = Body(...), db=DB, me=Depends(require(PERM_CREATE))):
     return _view(db, me, orgs.create_contact(db, me, coerce_dates(dict(data))))
 
 
@@ -43,16 +43,16 @@ def get_contact(cid: str, db=DB, me=IDP):
 
 @router.patch("/{cid}")
 def update_contact(cid: str, data: dict = Body(...), db=DB,
-                   me=IDP(require(PERM_UPDATE))):
+                   me=Depends(require(PERM_UPDATE))):
     return _view(db, me, orgs.update_contact(db, me, cid, coerce_dates(dict(data))))
 
 
 @router.delete("/{cid}", status_code=204)
-def delete_contact(cid: str, db=DB, me=IDP(require(PERM_DELETE))):
+def delete_contact(cid: str, db=DB, me=Depends(require(PERM_DELETE))):
     orgs.delete_contact(db, me, cid)
 
 
 @router.put("/{cid}/tags")
 def replace_tags(cid: str, tags: list[str] = Body(...), db=DB,
-                 me=IDP(require(PERM_UPDATE))):
+                 me=Depends(require(PERM_UPDATE))):
     return {"tags": set_entity_tags(db, me, "contact", cid, tags)}
